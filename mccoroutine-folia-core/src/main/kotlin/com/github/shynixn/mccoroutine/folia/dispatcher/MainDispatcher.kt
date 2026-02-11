@@ -19,7 +19,7 @@ class MainDispatcher(
 
     init {
         executor.submit {
-            threadId = Thread.currentThread().id
+            threadId = Thread.currentThread().threadId()
         }
         executor.scheduleAtFixedRate({
             val actions = ArrayList<Runnable>()
@@ -41,7 +41,7 @@ class MainDispatcher(
             return
         }
 
-        if (Thread.currentThread().id != threadId) {
+        if (Thread.currentThread().threadId() != threadId) {
             actionQueue.add(block)
         } else {
             block.run()
