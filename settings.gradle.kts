@@ -1,30 +1,38 @@
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://repo.slne.dev/repository/maven-public/")
+        maven("https://repo.papermc.io/repository/maven-public/")
+    }
+}
+
 rootProject.name = "mccoroutine-root"
 
-include("mccoroutine-bukkit-api")
-include("mccoroutine-bukkit-core")
-include("mccoroutine-bukkit-test")
-include("mccoroutine-bukkit-sample")
+//include("mccoroutine-bukkit-api")
+//include("mccoroutine-bukkit-core")
+//include("mccoroutine-bukkit-test")
+//include("mccoroutine-bukkit-sample")
 
-include("mccoroutine-bungeecord-api")
-include("mccoroutine-bungeecord-core")
-include("mccoroutine-bungeecord-sample")
+//include("mccoroutine-bungeecord-api")
+//include("mccoroutine-bungeecord-core")
+//include("mccoroutine-bungeecord-sample")
 
-include("mccoroutine-fabric-api")
-include("mccoroutine-fabric-core")
+//include("mccoroutine-fabric-api")
+//include("mccoroutine-fabric-core")
 
 include("mccoroutine-folia-api")
 include("mccoroutine-folia-core")
-include("mccoroutine-folia-test")
-include("mccoroutine-folia-sample")
+//include("mccoroutine-folia-test")
+//include("mccoroutine-folia-sample")
 
-include("mccoroutine-minestom-api")
-include("mccoroutine-minestom-core")
-include("mccoroutine-minestom-sample")
+//include("mccoroutine-minestom-api")
+//include("mccoroutine-minestom-core")
+//include("mccoroutine-minestom-sample")
 
-include("mccoroutine-sponge-api")
-include("mccoroutine-sponge-core")
-include("mccoroutine-sponge-sample")
+//include("mccoroutine-sponge-api")
+//include("mccoroutine-sponge-core")
+//include("mccoroutine-sponge-sample")
 
 include("mccoroutine-velocity-api")
 include("mccoroutine-velocity-core")
-include("mccoroutine-velocity-sample")
+//include("mccoroutine-velocity-sample")
