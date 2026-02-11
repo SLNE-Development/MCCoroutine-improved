@@ -23,23 +23,21 @@ subprojects {
         jvmToolchain(25)
     }
 
-    if (name.contains("api")) {
-        apply(plugin = "maven-publish")
+    apply(plugin = "maven-publish")
 
-        publishing {
-            repositories {
-                maven("https://repo.slne.dev/repository/maven-releases/") {
-                    name = "maven-releases"
-                    credentials {
-                        username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
-                        password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
-                    }
+    publishing {
+        repositories {
+            maven("https://repo.slne.dev/repository/maven-releases/") {
+                name = "maven-releases"
+                credentials {
+                    username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
+                    password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
                 }
             }
+        }
 
-            publications.create<MavenPublication>("maven") {
-                from(components["java"])
-            }
+        publications.create<MavenPublication>("maven") {
+            from(components["java"])
         }
     }
 }
