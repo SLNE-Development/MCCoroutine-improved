@@ -2,16 +2,14 @@ package com.github.shynixn.mccoroutine.folia.dispatcher
 
 import com.github.shynixn.mccoroutine.folia.service.WakeUpBlockServiceImpl
 import kotlinx.coroutines.CoroutineDispatcher
-import org.bukkit.World
+import org.bukkit.entity.Entity
 import org.bukkit.plugin.Plugin
 import kotlin.coroutines.CoroutineContext
 
-internal open class RegionDispatcher(
+internal open class EntityDispatcher(
     private val plugin: Plugin,
     private val wakeUpBlockService: WakeUpBlockServiceImpl,
-    private val world: World,
-    private val chunkX: Int,
-    private val chunkZ: Int
+    private val entity: Entity
 ) : CoroutineDispatcher() {
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
@@ -21,13 +19,18 @@ internal open class RegionDispatcher(
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()
-        return true
+
+        return !plugin.server.isOwnedByCurrentRegion(entity)
     }
 
     /**
      * Handles dispatching the coroutine on the correct thread.
      */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        plugin.server.regionScheduler.execute(plugin, world, chunkX, chunkZ, block)
+        entity.scheduler.run(plugin, {
+            block.run()
+        }, {
+            block.run()
+        })
     }
 }
