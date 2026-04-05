@@ -2,10 +2,6 @@ package com.github.shynixn.mccoroutine.folia.impl
 
 import com.github.shynixn.mccoroutine.folia.*
 import com.github.shynixn.mccoroutine.folia.dispatcher.*
-import com.github.shynixn.mccoroutine.folia.dispatcher.AsyncFoliaCoroutineDispatcher
-import com.github.shynixn.mccoroutine.folia.dispatcher.EntityDispatcher
-import com.github.shynixn.mccoroutine.folia.dispatcher.GlobalRegionDispatcher
-import com.github.shynixn.mccoroutine.folia.dispatcher.RegionDispatcher
 import com.github.shynixn.mccoroutine.folia.service.CommandServiceImpl
 import com.github.shynixn.mccoroutine.folia.service.EventServiceImpl
 import com.github.shynixn.mccoroutine.folia.service.WakeUpBlockServiceImpl

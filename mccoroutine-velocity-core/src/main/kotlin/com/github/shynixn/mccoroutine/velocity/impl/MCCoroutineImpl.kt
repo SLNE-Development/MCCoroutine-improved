@@ -9,11 +9,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.logging.log4j.core.Logger
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 class MCCoroutineImpl : MCCoroutine {
     private val items = ConcurrentHashMap<Any, CoroutineSessionImpl>()
     private val filterSessions = ConcurrentHashMap<PluginContainer, StartupLogFilter>()
     private var logger: Logger? = null
+
+    private val isVelocityCtd by lazy {
+        try {
+            Class.forName("com.velocityctd.proxy.queue.RedisVelocityQueue")
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     /**
      * Get coroutine session for the given plugin.
@@ -54,7 +64,7 @@ class MCCoroutineImpl : MCCoroutine {
         session.scope.launch(Dispatchers.IO) {
             // Once the plugin is enabled, the filter is removed again to avoid any conflicts.
             while (!pluginManager.isLoaded(pluginContainer.description.id)) {
-                delay(5000)
+                delay(5000.milliseconds)
             }
 
             if (filterSessions.containsKey(pluginContainer)) {
@@ -87,7 +97,12 @@ class MCCoroutineImpl : MCCoroutine {
     override fun disableLogging(plugin: PluginContainer, suspendingPluginContainer: SuspendingPluginContainer) {
         try {
             val clazz = Class.forName("com.velocitypowered.proxy.VelocityServer")
-            val loggerField = clazz.getDeclaredField("logger")
+            val loggerField = if (!isVelocityCtd) {
+                clazz.getDeclaredField("logger")
+            } else {
+                clazz.getDeclaredField("LOGGER")
+            }
+
             loggerField.isAccessible = true
             val filter = StartupLogFilter()
             this.logger = loggerField.get(null) as Logger

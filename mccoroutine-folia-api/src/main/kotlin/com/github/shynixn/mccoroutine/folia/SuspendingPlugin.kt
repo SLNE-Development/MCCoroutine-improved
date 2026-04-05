@@ -9,12 +9,12 @@ interface SuspendingPlugin : Plugin {
     /**
      * Called when this plugin is enabled
      */
-    suspend fun onEnableAsync();
+    suspend fun onEnableAsync()
 
     /**
      * Called when this plugin is disabled.
      */
-    suspend fun onDisableAsync();
+    suspend fun onDisableAsync()
 
     /**
      * Called after a plugin is loaded but before it has been enabled.
@@ -23,5 +23,5 @@ interface SuspendingPlugin : Plugin {
      * When multiple plugins are loaded, the onLoad() for all plugins is
      * called before any onEnable() is called.
      */
-    suspend fun onLoadAsync();
+    suspend fun onLoadAsync()
 }

@@ -19,7 +19,6 @@ internal open class EntityDispatcher(
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()
-
         return !plugin.server.isOwnedByCurrentRegion(entity)
     }
 

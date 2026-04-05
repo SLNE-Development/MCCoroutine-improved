@@ -17,7 +17,6 @@ internal open class GlobalRegionDispatcher(
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()
-
         return !plugin.server.isGlobalTickThread
     }
 

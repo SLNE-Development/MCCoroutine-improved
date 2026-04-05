@@ -66,7 +66,7 @@ val Plugin.mainDispatcher: CoroutineContext
  */
 fun Plugin.ensurePluginThread() {
     val threadId = mcCoroutine.getCoroutineSession(this).dispatcherMainThreadId
-    if (Thread.currentThread().id != threadId) {
+    if (Thread.currentThread().threadId() != threadId) {
         throw IllegalStateException("The current thread is not the main thread of plugin ${name}.")
     }
 }
