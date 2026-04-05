@@ -24,21 +24,18 @@ internal class CoroutineSessionImpl(
      * Gets if the Folia schedulers where successfully loaded into MCCoroutine.
      * Returns false if MCCoroutine falls back to the BukkitScheduler.
      */
-    override val isFoliaLoaded: Boolean by lazy {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
-            true
-        } catch (e: ClassNotFoundException) {
-            false
-        }
+    override val isFoliaLoaded: Boolean = try {
+        Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
+        true
+    } catch (_: ClassNotFoundException) {
+        false
     }
 
     /**
      * Gets the block service during startup.
+     * Eagerly initialized: always needed by dispatcherGlobalRegion which is used in init.
      */
-    private val wakeUpBlockService: WakeUpBlockServiceImpl by lazy {
-        WakeUpBlockServiceImpl(plugin)
-    }
+    private val wakeUpBlockService = WakeUpBlockServiceImpl(plugin)
 
     /**
      * Gets the event service.
@@ -60,54 +57,67 @@ internal class CoroutineSessionImpl(
     override val scope: CoroutineScope
 
     /**
-     * The global region dispatcher is simply used to perform edits on data that the global region owns, such as game rules, day time, weather, or to execute commands using the console command sender.
+     * The global region dispatcher is simply used to perform edits on data that the global region owns,
+     * such as game rules, day time, weather, or to execute commands using the console command sender.
      */
-    override val dispatcherGlobalRegion: CoroutineContext by lazy {
+    override val dispatcherGlobalRegion: CoroutineContext =
         if (isFoliaLoaded) {
             GlobalRegionDispatcher(plugin, wakeUpBlockService)
         } else {
             MinecraftCoroutineDispatcher(plugin, wakeUpBlockService)
         }
-    }
 
     /**
      * Gets the async dispatcher.
      */
-    override val dispatcherAsync: CoroutineContext by lazy {
+    override val dispatcherAsync: CoroutineContext =
         if (isFoliaLoaded) {
             AsyncFoliaCoroutineDispatcher(plugin, wakeUpBlockService)
         } else {
             AsyncCoroutineDispatcher(plugin, wakeUpBlockService)
         }
-    }
 
     /**
      * The main dispatcher represents the main thread of a plugin.
      */
+    private var dispatcherMainInitialized = false
     override val dispatcherMain: MainDispatcher by lazy {
+        dispatcherMainInitialized = true
         MainDispatcher(plugin, mcCoroutineConfiguration.mainDispatcherTickRateMs)
     }
+
+    /**
+     * Pre-resolved dispatcher factory for region dispatchers.
+     */
+    private val regionDispatcherFactory: (World, Int, Int) -> CoroutineContext =
+        if (isFoliaLoaded) {
+            { world, chunkX, chunkZ -> RegionDispatcher(plugin, wakeUpBlockService, world, chunkX, chunkZ) }
+        } else {
+            { _, _, _ -> dispatcherGlobalRegion }
+        }
+
+    /**
+     * Pre-resolved dispatcher factory for entity dispatchers.
+     */
+    private val entityDispatcherFactory: (Entity) -> CoroutineContext =
+        if (isFoliaLoaded) {
+            { entity -> EntityDispatcher(plugin, wakeUpBlockService, entity) }
+        } else {
+            { _ -> dispatcherGlobalRegion }
+        }
 
     /**
      * The RegionizedTaskQueue allows tasks to be scheduled to be executed on the next tick of a region that owns a specific location, or creating such region if it does not exist.
      */
     override fun getRegionDispatcher(world: World, chunkX: Int, chunkZ: Int): CoroutineContext {
-        if (isFoliaLoaded) {
-            return RegionDispatcher(plugin, wakeUpBlockService, world, chunkX, chunkZ)
-        }
-
-        return dispatcherGlobalRegion // minecraftDispatcher on BukkitOnly servers
+        return regionDispatcherFactory(world, chunkX, chunkZ)
     }
 
     /**
     The EntityScheduler allows tasks to be scheduled to be executed on the region that owns the entity.
      */
     override fun getEntityDispatcher(entity: Entity): CoroutineContext {
-        if (isFoliaLoaded) {
-            return EntityDispatcher(plugin, wakeUpBlockService, entity)
-        }
-
-        return dispatcherGlobalRegion // minecraftDispatcher on BukkitOnly servers
+        return entityDispatcherFactory(entity)
     }
 
     /**
@@ -205,7 +215,9 @@ internal class CoroutineSessionImpl(
     fun dispose() {
         scope.coroutineContext.cancelChildren()
         scope.cancel()
-        dispatcherMain.close()
+        if (dispatcherMainInitialized) {
+            dispatcherMain.close()
+        }
         wakeUpBlockService.dispose()
     }
 }

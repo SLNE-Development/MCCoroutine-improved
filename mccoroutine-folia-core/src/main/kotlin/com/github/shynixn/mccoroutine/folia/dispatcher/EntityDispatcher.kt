@@ -12,10 +12,7 @@ internal open class EntityDispatcher(
     private val entity: Entity
 ) : CoroutineDispatcher() {
     /**
-     * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
-     * The default behavior for most dispatchers is to return `true`.
-     * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     * Returns false if the current thread already owns the entity's region, allowing inline execution.
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()
@@ -26,10 +23,6 @@ internal open class EntityDispatcher(
      * Handles dispatching the coroutine on the correct thread.
      */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        entity.scheduler.run(plugin, {
-            block.run()
-        }, {
-            block.run()
-        })
+        entity.scheduler.run(plugin, { block.run() }, block)
     }
 }

@@ -24,13 +24,22 @@ internal class WakeUpBlockServiceImpl(private val plugin: Plugin) {
     }
 
     /**
+     * Fast-path flag: once startup is complete, ensureWakeup() returns immediately
+     * with a single volatile read instead of checking multiple fields.
+     */
+    @Volatile
+    private var startupComplete: Boolean = false
+
+    /**
      * Enables or disables the server heartbeat hack.
      */
+    @Volatile
     var isManipulatedServerHeartBeatEnabled: Boolean = false
 
     /**
      * Reference to the primary server thread.
      */
+    @Volatile
     var primaryThread: Thread? = null
 
     /**
@@ -38,13 +47,19 @@ internal class WakeUpBlockServiceImpl(private val plugin: Plugin) {
      * is not sleeping if a run is scheduled by blocking.
      */
     fun ensureWakeup() {
+        // Fast-path: after startup is done, return immediately with a single volatile read.
+        if (startupComplete) {
+            return
+        }
+
         if (!isManipulatedServerHeartBeatEnabled) {
-            if (threadSupport != null) {
-                threadSupport!!.shutdown()
+            val support = threadSupport
+            if (support != null) {
+                support.shutdown()
                 threadSupport = null
             }
-
-            // In all cases except startup, the call immediately returns here.
+            // Mark startup as complete so future calls take the fast-path.
+            startupComplete = true
             return
         }
 
@@ -52,16 +67,14 @@ internal class WakeUpBlockServiceImpl(private val plugin: Plugin) {
             primaryThread = Thread.currentThread()
         }
 
-        if (primaryThread == null) {
-            return
-        }
+        val thread = primaryThread ?: return
 
         if (threadSupport == null) {
             threadSupport = Executors.newFixedThreadPool(1)
         }
 
         threadSupport!!.submit {
-            val blockingCoroutine = LockSupport.getBlocker(primaryThread)
+            val blockingCoroutine = LockSupport.getBlocker(thread)
 
             if (blockingCoroutine != null) {
                 val currentTick = craftSchedulerTickField.get(plugin.server.scheduler)
@@ -75,5 +88,6 @@ internal class WakeUpBlockServiceImpl(private val plugin: Plugin) {
      */
     fun dispose() {
         threadSupport?.shutdown()
+        startupComplete = true
     }
 }

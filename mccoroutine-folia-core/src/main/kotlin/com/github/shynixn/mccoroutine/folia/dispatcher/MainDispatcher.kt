@@ -14,23 +14,42 @@ class MainDispatcher(
     private val executor = Executors.newScheduledThreadPool(1) { r ->
         Thread(r, "MCCoroutine-${plugin.name}-MainThread")
     }
-    private var actionQueue = ConcurrentLinkedQueue<Runnable>()
+    private val actionQueue = ConcurrentLinkedQueue<Runnable>()
+
+    /**
+     * Thread id of the dedicated main thread.
+     */
+    @Volatile
     var threadId = -1L
+
+    /**
+     * Pre-allocated drain list reused every tick to avoid repeated ArrayList allocation.
+     */
+    private val drainList = ArrayList<Runnable>(16)
 
     init {
         executor.submit {
             threadId = Thread.currentThread().threadId()
         }
         executor.scheduleAtFixedRate({
-            val actions = ArrayList<Runnable>()
+            drainList.clear()
             while (true) {
                 val action = actionQueue.poll() ?: break
-                actions.add(action)
+                drainList.add(action)
             }
-            for (action in actions) {
+            for (action in drainList) {
                 action.run()
             }
         }, 1L, tickRateMs, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
+     * Returns false if we are already on the main dispatcher thread, allowing the framework to
+     * skip dispatch entirely and run the block inline.
+     */
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+        return Thread.currentThread().threadId() != threadId
     }
 
     /**
@@ -50,14 +69,12 @@ class MainDispatcher(
 
     /**
      * Closes this resource, relinquishing any underlying resources.
-     * This method is invoked automatically on objects managed by the
-     * `try`-with-resources statement.
-     * However, implementers of this interface are strongly encouraged
-     * to make their `close` methods idempotent.
+     * Drains remaining queued actions and shuts down the executor immediately.
      *
      * @throws Exception if this resource cannot be closed
      */
     override fun close() {
-        executor.shutdown()
+        actionQueue.clear()
+        executor.shutdownNow()
     }
 }

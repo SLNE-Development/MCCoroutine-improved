@@ -35,11 +35,8 @@ class MCCoroutineImpl : MCCoroutine {
             plugin
         }
 
-        if (!items.containsKey(pluginInstance)) {
-            throw IllegalArgumentException("Inject SuspendingPluginContainer into your plugin class to boot MCCoroutine!")
-        }
-
-        return items[pluginInstance]!!
+        return items[pluginInstance]
+            ?: throw IllegalArgumentException("Inject SuspendingPluginContainer into your plugin class to boot MCCoroutine!")
     }
 
     /**
@@ -50,15 +47,15 @@ class MCCoroutineImpl : MCCoroutine {
         pluginContainer: PluginContainer,
         suspendingPluginContainer: SuspendingPluginContainer
     ) {
-        if (items.contains(pluginInstance)) {
+        if (items.containsKey(pluginInstance)) {
             return
         }
 
         // Velocity does not have any static API functions. Therefore, we need to link plugin and suspending plugin manually.
-        items[pluginInstance] = CoroutineSessionImpl(pluginContainer, suspendingPluginContainer)
+        val session = CoroutineSessionImpl(pluginContainer, suspendingPluginContainer)
+        items[pluginInstance] = session
 
         // ReEnable logging.
-        val session = getCoroutineSession(pluginInstance)
         val pluginManager = suspendingPluginContainer.server.pluginManager
         // Scheduler might not be loaded yet.
         session.scope.launch(Dispatchers.IO) {
@@ -81,13 +78,8 @@ class MCCoroutineImpl : MCCoroutine {
      * Disables coroutine for the given plugin.
      */
     override fun disable(plugin: PluginContainer) {
-        if (!items.containsKey(plugin)) {
-            return
-        }
-
-        val session = items[plugin]!!
+        val session = items.remove(plugin) ?: return
         session.dispose()
-        items.remove(plugin)
     }
 
     /**

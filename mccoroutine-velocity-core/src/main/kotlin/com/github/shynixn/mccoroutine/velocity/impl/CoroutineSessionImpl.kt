@@ -29,11 +29,10 @@ internal class CoroutineSessionImpl(
     override val scope: CoroutineScope
 
     /**
-     * Velocity Dispatcher.
+     * Velocity Dispatcher. Eagerly initialized since it's always used in the scope.
      */
-    override val dispatcherVelocity: CoroutineContext by lazy {
+    override val dispatcherVelocity: CoroutineContext =
         VelocityCoroutineDispatcher(pluginContainer, suspendingPluginContainer)
-    }
 
     init {
         // Root Exception Handler. All Exception which are not consumed by the caller end up here.

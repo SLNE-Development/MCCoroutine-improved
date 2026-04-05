@@ -13,10 +13,8 @@ internal open class AsyncCoroutineDispatcher(
     private val wakeUpBlockService: WakeUpBlockServiceImpl
 ) : CoroutineDispatcher() {
     /**
-     * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
-     * The default behavior for most dispatchers is to return `true`.
-     * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     * Always returns true: async tasks must always be dispatched to the async thread pool,
+     * regardless of the current thread.
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()

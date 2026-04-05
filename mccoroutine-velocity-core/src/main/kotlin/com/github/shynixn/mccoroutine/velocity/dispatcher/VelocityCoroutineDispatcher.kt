@@ -12,8 +12,9 @@ internal class VelocityCoroutineDispatcher(
 ) : CoroutineDispatcher() {
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
-     * Multithreading in Velocity works by different threadPools where
-     * it is not clear who scheduled a task. Dispatch task every time.
+     * Velocity uses thread pools where there is no reliable way to determine if the current thread
+     * belongs to the Velocity scheduler. Therefore, we always dispatch to ensure correct execution.
+     * This is the safest approach and avoids potential thread-affinity issues.
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         return true
@@ -21,6 +22,7 @@ internal class VelocityCoroutineDispatcher(
 
     /**
      * Handles dispatching the coroutine on the correct thread.
+     * Uses Velocity's scheduler API to schedule the task for execution.
      */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         suspendingPluginContainer.server.scheduler

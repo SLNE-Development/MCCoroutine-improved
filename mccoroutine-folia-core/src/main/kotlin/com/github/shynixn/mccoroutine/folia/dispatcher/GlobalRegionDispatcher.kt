@@ -10,10 +10,7 @@ internal open class GlobalRegionDispatcher(
     private val wakeUpBlockService: WakeUpBlockServiceImpl
 ) : CoroutineDispatcher() {
     /**
-     * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
-     * The default behavior for most dispatchers is to return `true`.
-     * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     * Returns false if already on the global tick thread, allowing inline execution.
      */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         wakeUpBlockService.ensureWakeup()
