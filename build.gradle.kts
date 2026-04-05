@@ -1,9 +1,10 @@
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
-    kotlin("jvm") version "2.3.10" apply false
+    kotlin("jvm") version "2.3.20" apply false
+    id("org.jetbrains.dokka-javadoc") version "2.2.0" apply false
     `java-library`
-    `kotlin-dsl`
     `maven-publish`
 }
 
@@ -13,7 +14,23 @@ allprojects {
 }
 
 subprojects {
+    val isApiModule = name.endsWith("-api")
+
     apply(plugin = "java-library")
+
+    val dokkaJavadocJar = if (isApiModule) {
+        apply(plugin = "org.jetbrains.dokka-javadoc")
+
+        tasks.register<Jar>("dokkaJavadocJar") {
+            group = JavaBasePlugin.DOCUMENTATION_GROUP
+            description = "Assembles a JAR containing Dokka Javadoc output."
+            archiveClassifier.set("javadoc")
+            dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
+            from(tasks.named("dokkaGeneratePublicationJavadoc"))
+        }
+    } else {
+        null
+    }
 
     dependencies {
         compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
@@ -21,6 +38,19 @@ subprojects {
 
     extensions.findByType<KotlinJvmExtension>()?.apply {
         jvmToolchain(25)
+    }
+
+    java {
+        withSourcesJar()
+        if (!isApiModule) {
+            withJavadocJar()
+        }
+    }
+
+    if (dokkaJavadocJar != null) {
+        tasks.named("assemble") {
+            dependsOn(dokkaJavadocJar)
+        }
     }
 
     apply(plugin = "maven-publish")
@@ -38,6 +68,10 @@ subprojects {
 
         publications.create<MavenPublication>("maven") {
             from(components["java"])
+
+            dokkaJavadocJar?.let {
+                artifact(it)
+            }
         }
     }
 }
