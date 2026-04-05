@@ -57,8 +57,8 @@ subprojects {
 
     publishing {
         repositories {
-            maven("https://repo.slne.dev/repository/maven-releases/") {
-                name = "maven-releases"
+            maven("https://reposilite.slne.dev/releases") {
+                name = "slne-repository-releases"
                 credentials {
                     username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
                     password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")

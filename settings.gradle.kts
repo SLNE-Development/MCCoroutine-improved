@@ -1,7 +1,7 @@
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://repo.slne.dev/repository/maven-public/")
+        maven("https://reposilite.slne.dev/releases")
         maven("https://repo.papermc.io/repository/maven-public/")
     }
 }
